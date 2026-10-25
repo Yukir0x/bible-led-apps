@@ -1,0 +1,41 @@
+# Compile l'application Mac de Bible L.E.D (.dmg Apple Silicon et Intel, sans signature Apple) à partir du paquet source
+# préparé sur l'ordinateur (tools/bible-led/apps/build_windows.mjs --mac) et déposé dans la version « mac-sources ».
+# Lancement : gh workflow run mac.yml -f version=3.0.47   (les .dmg sont ajoutés à la version v3.0.47)
+name: Application Mac
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version de l'application (par exemple 3.0.47)"
+        required: true
+permissions:
+  contents: write
+jobs:
+  mac:
+    runs-on: macos-14
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Télécharger le paquet source
+        run: |
+          gh release download mac-sources --repo "$GITHUB_REPOSITORY" --pattern "BibleLED-mac-source-$VERSION.zip" --dir src
+          mkdir app
+          cd app
+          unzip -q ../src/BibleLED-mac-source-$VERSION.zip
+          ls -la
+      - name: Compiler les .dmg
+        working-directory: app
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --mac --publish never
+          ls -la dist
+      - name: Ajouter les .dmg à la version
+        run: |
+          gh release upload "v$VERSION" app/dist/*.dmg --repo "$GITHUB_REPOSITORY" --clobber
