@@ -23,10 +23,10 @@ jobs:
           node-version: 20
       - name: Télécharger le paquet source
         run: |
-          gh release download mac-sources --repo "$GITHUB_REPOSITORY" --pattern "BibleLED-mac-source-$VERSION.zip" --dir src
+          gh release download mac-sources --repo "$GITHUB_REPOSITORY" --pattern "BibleLED-mac-source-$VERSION.tar.gz" --dir src
           mkdir app
           cd app
-          unzip -q ../src/BibleLED-mac-source-$VERSION.zip
+          tar -xzf ../src/BibleLED-mac-source-$VERSION.tar.gz
           ls -la
       - name: Compiler les .dmg
         working-directory: app
